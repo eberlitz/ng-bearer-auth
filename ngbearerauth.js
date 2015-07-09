@@ -176,18 +176,18 @@
             }
 
             if (me._hasAccessToken()) {
-                console.log("hasAccessToken");
+                //console.log("hasAccessToken");
                 deferred.resolve(this.access_token);
             } else if (me._hasRefreshToken()) {
-                console.log("hasRefreshToken");
+                //console.log("hasRefreshToken");
                 me._requestAccessToken()
                     .then(function() {
-                        console.log("RefreshToken exchanged: " + me.refresh_token);
+                        //console.log("RefreshToken exchanged: " + me.refresh_token);
                         deferred.resolve(me.access_token);
                     }, function(response) {
-                        console.log("Exchange refreshToken error");
+                        //console.log("Exchange refreshToken error");
                         if (isBadRefreshToken(response)) {
-                            console.log("isBadRefreshToken");
+                            //console.log("isBadRefreshToken");
                             me.removeToken();
                             //console.log("Credentials requested: " + me.options.url);
                             //requestCredentials();
@@ -238,13 +238,16 @@
         function _requestAccessToken() {
             var me = this;
             var deferred = $q.defer();
+            var options = angular.extend({
+                authorizeUrl: me.options.url + 'token'
+            }, me.options);
 
             var data = {
                 grant_type: 'refresh_token',
                 refresh_token: me.refresh_token,
                 // Opcionais
-                client_id: me.options.clientId,
-                client_secret: me.options.clientSecret
+                client_id: options.clientId,
+                client_secret: options.clientSecret
             };
             var body = [];
             for (var prop in data) {
@@ -253,7 +256,7 @@
                 };
             };
 
-            var refreshUrl = me.options.authorizeUrl;
+            var refreshUrl = options.authorizeUrl;
             if (!me._hasPendingRequests()) {
                 me._addPendingRequest(deferred);
                 $http.post(refreshUrl, body.join("&"), {
@@ -292,7 +295,7 @@
             }
 
             function requestCredentials() {
-                console.log("Credentials requested: " + me.options.url);
+                //console.log("Credentials requested: " + me.options.url);
 
                 //Se a função foi definida supoe-se resourceOwnerCredentials
                 if (!me.options.resourceOwnerCredentialsFn) {
@@ -351,25 +354,7 @@
             });
             delete me._pendingRequests;
         };
-    })
-
-    // .config(function($authProvider) {
-    //         $authProvider.configure({
-    //             clientId: "teste"
-    //         });
-    //     })
-    //     .run(function($authProvider, $auth) {
-    //         $authProvider.configure({
-    //             name: "api2",
-    //             url: "http://localhost/api2/"
-    //         });
-    //         var api2Auth = $authProvider.get('api2');
-    //         api2Auth = $authProvider.getByUrl('http://localhost/api2/users/2');
-    //         api2Auth.authorize();
-
-    //         $auth.authorize();
-    //     });
-
+    });
 
     angular.module('ngBearerAuthInterceptor', ['ngBearerAuth'])
         .config(function($httpProvider) {
@@ -400,8 +385,6 @@
                 if (response.status === 401 && response.config) {
                     var $auth = $authProvider.getByUrl(response.config.url);
                     if ($auth) {
-                        response.config.retryAuthorization = (response.config.retryAuthorization || 0) + 1;
-                        console.log('Tentativa numero: ' + response.config.retryAuthorization);
                         $auth.removeToken();
                         return $auth._authorizeRequest(response.config, response);
                     }
