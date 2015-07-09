@@ -28,7 +28,7 @@ angular.module('sampleApp', [
     'ngBearerAuth',
     'ngBearerAuthInterceptor'
 ])
-.config(function ($authProvider){
+.run(function ($authProvider){
     // Default configuration
     $authProvider.configure({
         clientId: "AppKey",
@@ -52,9 +52,9 @@ angular.module('sampleApp', [
         clientId: "Api3Id"
     });
 
-    var auth = $authService.get("api3");
-    console.log(auth.config.clientId);
-    auth.isAuthenticated();
+    var api3Auth = $authService.get("api3");
+    console.log(api3Auth.options.clientId);
+    api3Auth.isAuthenticated();
 });
 ```
 
@@ -86,7 +86,7 @@ $auth.isAuthenticated()
 $auth.getToken()
 
 // Saves an authorization token to Storage.
-$auth.setToken(token)
+$auth.setToken(tokenData, isPersistent)
 ```
 
 ## Interceptor
