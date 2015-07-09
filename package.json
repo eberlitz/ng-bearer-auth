@@ -1,0 +1,41 @@
+{
+  "name": "ng-bearer-auth",
+  "version": "0.1.0",
+  "description": "Token-based AngularJS Authentication",
+  "main": "ngbearerauth.min.js",
+  "scripts": {
+    "test": "karma start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eberlitz/ng-bearer-auth.git"
+  },
+  "keywords": [
+    "authentication",
+    "token",
+    "bearer",
+    "angular",
+    "auth",
+    "oauth",
+    "oauth2",
+    "angularjs",
+    "access_token"
+  ],
+  "author": {
+    "name": "Eduardo Eidelwein Berlitz",
+    "email": "eberlitz@gmail.com",
+    "url": "http://eberlitz.github.io"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eberlitz/ng-bearer-auth/issues"
+  },
+  "homepage": "https://github.com/eberlitz/ng-bearer-auth",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-header": "^1.2.2",
+    "gulp-ng-annotate": "^1.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.2.0"
+  }
+}
