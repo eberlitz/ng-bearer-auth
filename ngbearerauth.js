@@ -2,14 +2,16 @@
     'use strict';
     angular.module('ngBearerAuth', [])
         .provider('$auth', AuthProvider)
-        .factory('$authService', AuthService)
+        //.factory('$authService', AuthService)
         .factory('$authServiceInterceptor', AuthServiceInterceptor);
 
     angular.module('ngBearerAuthInterceptor', ['ngBearerAuth'])
         .config(function($httpProvider) {
             $httpProvider.interceptors.push('$authServiceInterceptor');
         });
+
     //--------------------------------------------------------
+
     function AuthProvider() {
         var configs = {};
         return {
@@ -29,7 +31,7 @@
                 delete configs[this.name];
             };
         }
-
+        //--------------------------------------------------------
         function AuthService($q) {
             return {
                 configure: configure,
