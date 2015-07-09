@@ -1,6 +1,5 @@
 {
   "name": "ng-bearer-auth",
-  "version": "0.1.0",
   "homepage": "https://github.com/eberlitz/ng-bearer-auth",
   "authors": [
     "Eduardo Eidelwein Berlitz <eberlitz@gmail.com>"
@@ -27,7 +26,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "~1.4.2",
-    "angular-mocks": "~1.4.2"
+    "angular": "~1.3.13",
+    "angular-mocks": "~1.3.13"
   }
 }
