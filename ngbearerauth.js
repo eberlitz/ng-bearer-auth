@@ -63,6 +63,7 @@
         AuthService.prototype.isAuthenticated = isAuthenticated;
         AuthService.prototype.getToken = getToken;
         AuthService.prototype.setToken = setToken;
+        AuthService.prototype.getRefreshToken = getRefreshToken;
         AuthService.prototype._authorizeRequest = _authorizeRequest;
         AuthService.prototype._hasRefreshToken = _hasRefreshToken;
         AuthService.prototype._hasAccessToken = _hasAccessToken;
@@ -86,8 +87,7 @@
         //     authorizeUrl?: string,
         //     persistent?: boolean
         // }
-        function authorize(options) {
-
+        function authorize(options, config) {
             //console.log(this.options.name, 'authorize', this.options);
             var me = this;
             var options = angular.extend({
@@ -146,6 +146,13 @@
             this.refresh_token = this._getData("refresh_token");
             return !!this.refresh_token;
         }
+
+        function getRefreshToken() {
+            if (this._hasRefreshToken()) {
+                return this.refresh_token;
+            };
+            return null;
+        };
 
         function _hasAccessToken() {
             var me = this;
@@ -263,7 +270,7 @@
                         ignoreAuthInterceptor: true
                     })
                     .success(function(response) {
-                        me.setToken(response);
+                        me.setToken(data, !!options.persistent);
                         me._resolveAllPendingRequest(true, arguments)
                     })
                     .error(function() {
@@ -300,7 +307,7 @@
                 //Se a função foi definida supoe-se resourceOwnerCredentials
                 if (!me.options.resourceOwnerCredentialsFn) {
                     // Se não está configurado o cliente 
-                    if (!me.options.client_id) {
+                    if (me.options.client_id) {
                         if (me.options.clientCredentialsFn) {
                             me.options.clientCredentialsFn();
                         } else {

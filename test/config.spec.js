@@ -1,14 +1,18 @@
-describe('ngBearerAuth', function() {
+describe('$authProvider', function() {
+    beforeEach(module('ngBearerAuth'));
 
-    beforeEach(function() {
-        var self = this;
-        module('ngBearerAuth', ['$authProvider', function($authProvider) {
-            self.$authProvider = $authProvider;
-        }]);
-    });
+    beforeEach(inject(['$window', '$httpBackend', '$authProvider', 
+    	function($window, $httpBackend, $authProvider) {
+        this.$window = $window;
+        this.$httpBackend = $httpBackend;
+        this.$authProvider = $authProvider;
+    }]));
 
     it('should be defined', function() {
         expect(this.$authProvider).toBeDefined();
     });
 
+     it('configure should be defined', function() {
+        expect(this.$authProvider.configure).toBeDefined();
+    });
 });
