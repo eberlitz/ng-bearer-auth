@@ -270,7 +270,7 @@
                         ignoreAuthInterceptor: true
                     })
                     .success(function(response) {
-                        me.setToken(data, !!options.persistent);
+                        me.setToken(response, !!options.persistent);
                         me._resolveAllPendingRequest(true, arguments)
                     })
                     .error(function() {
