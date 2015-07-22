@@ -5,7 +5,7 @@
     "Eduardo Eidelwein Berlitz <eberlitz@gmail.com>"
   ],
   "description": "Token-based AngularJS Authentication",
-  "main": "ngbearerauth.min.js",
+  "main": "dist/ng-bearer-auth.min.js",
   "keywords": [
     "authentication",
     "bearer",
