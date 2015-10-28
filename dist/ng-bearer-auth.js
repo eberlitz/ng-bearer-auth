@@ -1,14 +1,12 @@
 /**
  * ng-bearer-auth - Token-based AngularJS Authentication
- * @version v0.1.2
+ * @version v0.1.3
  * (c) 2015 Eduardo Eidelwein Berlitz
  * @link https://github.com/eberlitz/ng-bearer-auth
  * @license MIT
  */
 (function(root, factory) {
-    if (typeof module === 'object' && module.exports) {
-        module.exports = factory;
-    } else if (typeof angular === 'object' && angular.module) {
+    if (typeof angular === 'object' && angular.module) {
         angular.module('ngBearerAuth.service', [])
             .factory('$$storage', function($window) {
                 var storage = {
@@ -30,6 +28,8 @@
             .factory('$$authService', ['$q', '$http', '$$storage', function($q, $http, $storage) {
                 return factory($q, $http, $storage);
             }]);
+    } else if (typeof module === 'object' && module.exports) {
+        module.exports = factory;
     } else {
         throw new Error('Environment not supported!');
     }
