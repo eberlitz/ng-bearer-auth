@@ -4,7 +4,7 @@
   "description": "Token-based AngularJS Authentication",
   "main": "src/authservice.js",
   "jspm": {
-    "main": "dist/ng-bearer-auth.js",
+    "main": "dist/ng-bearer-auth.js"
   },
   "scripts": {
     "test": "./node_modules/karma/bin/karma start"
