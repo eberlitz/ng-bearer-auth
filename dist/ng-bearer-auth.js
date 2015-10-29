@@ -8,7 +8,7 @@
 (function(root, factory) {
     if (typeof angular === 'object' && angular.module) {
         angular.module('ngBearerAuth.service', [])
-            .factory('$$storage', function($window) {
+            .factory('$$storage', ["$window", function($window) {
                 var storage = {
 
                     getItem: function(name) {
@@ -24,7 +24,7 @@
                     }
                 };
                 return storage;
-            })
+            }])
             .factory('$$authService', ['$q', '$http', '$$storage', function($q, $http, $storage) {
                 return factory($q, $http, $storage);
             }]);
@@ -358,15 +358,15 @@
         ])
         .factory('$authServiceInterceptor', AuthServiceInterceptor)
 
-    .factory('$auth', function($authProvider) {
+    .factory('$auth', ["$authProvider", function($authProvider) {
         var defaultConfig = $authProvider.get('default');
         // if (!defaultConfig) {
         //     defaultConfig = $authProvider.configure({});
         // };
         return defaultConfig;
-    })
+    }])
 
-    .factory('$authProvider', function($$authService) {
+    .factory('$authProvider', ["$$authService", function($$authService) {
         var configs = {};
         var Provider = {
             configure: configure,
@@ -406,12 +406,12 @@
             };
             return null; //configs["default"];
         }
-    });
+    }]);
 
     angular.module('ngBearerAuthInterceptor', ['ngBearerAuth'])
-        .config(function($httpProvider) {
+        .config(["$httpProvider", function($httpProvider) {
             $httpProvider.interceptors.push('$authServiceInterceptor');
-        });
+        }]);
 
     //--------------------------------------------------------
 
@@ -445,5 +445,6 @@
             }
         };
     }
+    AuthServiceInterceptor.$inject = ["$injector", "$q"];
 
 })(window, window.angular);

@@ -27,8 +27,8 @@ gulp.task('minify', function() {
         .pipe(header(banner, {
             pkg: pkg
         }))
-        .pipe(gulp.dest('dist'))
         .pipe(ngAnnotate())
+        .pipe(gulp.dest('dist'))
         .pipe(uglify())
         .pipe(header(banner, {
             pkg: pkg
