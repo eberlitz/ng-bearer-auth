@@ -1,450 +1,395 @@
-/**
- * ng-bearer-auth - Token-based AngularJS Authentication
- * @version v0.1.3
- * (c) 2015 Eduardo Eidelwein Berlitz
- * @link https://github.com/eberlitz/ng-bearer-auth
- * @license MIT
- */
-(function(root, factory) {
-    if (typeof angular === 'object' && angular.module) {
-        angular.module('ngBearerAuth.service', [])
-            .factory('$$storage', ["$window", function($window) {
-                var storage = {
-
-                    getItem: function(name) {
-                        return $window.sessionStorage.getItem(name) || $window.localStorage.getItem(name);
-                    },
-                    removeItem: function(name, isPersistent) {
-                        var storage = isPersistent ? $window.localStorage : $window.sessionStorage;
-                        return storage.removeItem(name);
-                    },
-                    setItem: function(name, value, isPersistent) {
-                        var storage = isPersistent ? $window.localStorage : $window.sessionStorage;
-                        return storage.setItem(name, value);
-                    }
-                };
-                return storage;
-            }])
-            .factory('$$authService', ['$q', '$http', '$$storage', function($q, $http, $storage) {
-                return factory($q, $http, $storage);
-            }]);
-    } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory;
-    } else {
-        throw new Error('Environment not supported!');
+/// <reference path="../typings/tsd.d.ts" />
+function extend() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i - 0] = arguments[_i];
     }
-}(this, function($q, $http, $storage) {
+    var dst = args[0];
+    for (var i = 1, ii = arguments.length; i < ii; i++) {
+        var obj = arguments[i];
+        if (obj) {
+            var keys = Object.keys(obj);
+            for (var j = 0, jj = keys.length; j < jj; j++) {
+                var key = keys[j];
+                dst[key] = obj[key];
+            }
+        }
+    }
+    return dst;
+}
+;
+var AuthService = (function () {
     function AuthService(options) {
-        var me = this;
-        me.options = options;
+        this.options = options;
+        this.isPersistent = !!AuthService.$storage.getItem(options.name + "-isPersistent");
+        this.options = extend(options, {
+            clientCredentialsFn: function (authService, options) {
+                return authService.authorize();
+            }
+        });
     }
-    AuthService.prototype.authorize = authorize;
-    AuthService.prototype.removeToken = removeToken;
-    AuthService.prototype.isAuthenticated = isAuthenticated;
-    AuthService.prototype.getToken = getToken;
-    AuthService.prototype.setToken = setToken;
-    AuthService.prototype.getRefreshToken = getRefreshToken;
-    AuthService.prototype._authorizeRequest = _authorizeRequest;
-    AuthService.prototype._hasRefreshToken = _hasRefreshToken;
-    AuthService.prototype._hasAccessToken = _hasAccessToken;
-    AuthService.prototype._getData = _getData;
-    AuthService.prototype._requestAccessToken = _requestAccessToken;
-    AuthService.prototype._addPendingRequest = _addPendingRequest;
-    AuthService.prototype._hasPendingRequests = _hasPendingRequests;
-    AuthService.prototype._resolveAllPendingRequest = _resolveAllPendingRequest;
-    return AuthService;
-    // ----------------------------------------------------------
-    //
-    // Sign in using resource owner or client credentials
-    // options: {
-    //     username?: string,
-    //     password?: string,
-    //     cliendId?: string,
-    //     clientSecret?: string,
-    //     authorizeUrl?: string,
-    //     persistent?: boolean
-    // }
-    function authorize(options, config) {
-        //console.log(this.options.name, 'authorize', this.options);
+    AuthService.prototype.authorize = function (options, config) {
         var me = this;
-        var options = extend({
+        options = extend({
             authorizeUrl: me.options.url + 'token'
         }, me.options, options);
-        var deferred = $q.defer();
-
+        var deferred = AuthService.$q.defer();
         var data = {
             grant_type: options.username ? 'password' : 'client_credentials',
             username: options.username,
             password: options.password,
-            // Opcionais
             client_id: options.clientId,
             client_secret: options.clientSecret
         };
         var body = [];
         for (var prop in data) {
             if (data[prop] != null) {
-                body.push(prop + "=" + data[prop]);
-            };
-        };
-
+                body.push(prop + '=' + data[prop]);
+            }
+            ;
+        }
+        ;
         config = extend({
             ignoreAuthInterceptor: true
         }, config);
-
-        $http.post(options.authorizeUrl, body.join("&"), config)
-            .then(function(response) {
-                me.setToken(response.data, !!options.persistent);
-                deferred.resolve(response.data);
-            }, function(response) {
-                deferred.reject(response.data);
-            });
-
+        AuthService.$http.post(options.authorizeUrl, body.join('&'), config)
+            .then(function (response) {
+            me.setToken(response.data, !!options.persistent);
+            deferred.resolve(response.data);
+        }, function (response) {
+            deferred.reject(response.data);
+        });
         return deferred.promise;
-    }
-
-    // Removes authorization tokens from Storage.
-    function removeToken() {
+    };
+    AuthService.prototype.removeToken = function () {
         var me = this;
-        //var storage = me.isPersistent ? $window.localStorage : $window.sessionStorage;
-
-        var propsToRemove = ["access_token", "refresh_token", "expires_at"];
-        propsToRemove.map(function(prop) {
-            $storage.removeItem(me.options.name + '-' + prop, me.isPersistent);
+        var propsToRemove = ['access_token', 'refresh_token', 'expires_at'];
+        propsToRemove.map(function (prop) {
+            AuthService.$storage.removeItem(me.options.name + '-' + prop, me.isPersistent);
         });
     };
-
-    // Returns true if an refresh token or access token is present in Storage and it is not expired, otherwise returns false.
-    function isAuthenticated() {
+    AuthService.prototype.removeAccessToken = function () {
+        var me = this;
+        AuthService.$storage.removeItem(me.options.name + '-access_token', me.isPersistent);
+        this.access_token = undefined;
+    };
+    AuthService.prototype.isAuthenticated = function () {
         return this._hasRefreshToken() || this._hasAccessToken();
     };
-
-    function _hasRefreshToken() {
-        this.refresh_token = this._getData("refresh_token");
+    AuthService.prototype._hasRefreshToken = function () {
+        this.refresh_token = this._getData('refresh_token');
         return !!this.refresh_token;
-    }
-
-    function getRefreshToken() {
+    };
+    AuthService.prototype.getRefreshToken = function () {
         if (this._hasRefreshToken()) {
             return this.refresh_token;
-        };
+        }
+        ;
         return null;
     };
-
-    function _hasAccessToken() {
+    AuthService.prototype._hasAccessToken = function () {
         var me = this;
         var now = new Date().getTime();
-        var expires_at = me._getData("expires_at");
+        var expires_at = me._getData('expires_at');
         if (now < expires_at) {
-            me.access_token = me._getData("access_token");
-        } else {
+            me.access_token = me._getData('access_token');
+        }
+        else {
             me.access_token = undefined;
         }
         return !!me.access_token;
-    }
-
-    function _getData(propName) {
+    };
+    AuthService.prototype._getData = function (propName) {
         var me = this;
         propName = me.options.name + '-' + propName;
-        return $storage.getItem(propName); // $window.sessionStorage.getItem(propName) || $window.localStorage.getItem(propName);
-    }
-
-    // Returns an access token from the Storage if it is not expired. If there is an Refresh Token in Storage exchange it for an access token within the server.
-    function getToken() {
-        var me = this;
-        var deferred = $q.defer();
-
-
-        function isBadRefreshToken(response) {
-            return response[1] === 400 && response[0].error === "invalid_grant";
-        }
-
-        if (me._hasAccessToken()) {
-            //console.log("hasAccessToken");
-            deferred.resolve(this.access_token);
-        } else if (me._hasRefreshToken()) {
-            //console.log("hasRefreshToken");
-            me._requestAccessToken()
-                .then(function() {
-                    //console.log("RefreshToken exchanged: " + me.refresh_token);
-                    deferred.resolve(me.access_token);
-                }, function(response) {
-                    //console.log("Exchange refreshToken error");
-                    if (isBadRefreshToken(response)) {
-                        //console.log("isBadRefreshToken");
-                        me.removeToken();
-                        //console.log("Credentials requested: " + me.options.url);
-                        //requestCredentials();
-                    } //else abortRequest();
-                    deferred.reject(response);
-                });
-        } else {
-            //console.log("Credentials requested: " + me.options.url);
-            //requestCredentials();
-            deferred.reject("REQUEST_CREDENTIALS");
-        }
-
-        return deferred.promise;
+        return AuthService.$storage.getItem(propName);
     };
-    // Saves an authorization token to Storage.
-    // tokenData: {
-    //  access_token: string,
-    //  refresh_token?: string,
-    //  expires_in: number,
-    // }
-    function setToken(tokenData, isPersistent) {
+    AuthService.prototype.setToken = function (tokenData, isPersistent) {
         var me = this;
-        if (typeof me.isPersistent !== "undefined" && me.isPersistent !== !!isPersistent) {
+        if (typeof me.isPersistent !== 'undefined' && me.isPersistent !== !!isPersistent) {
             me.removeToken();
         }
         me.isPersistent = !!isPersistent;
-        //var storage = me.isPersistent ? $window.localStorage : $window.sessionStorage;
-
-
-
-        //Calculate exactly when the token will expire, then subtract
-        //30sec to give ourselves a small buffer.
+        AuthService.$storage.setItem(me.options.name + "-isPersistent", me.isPersistent, true);
         var now = new Date().getTime();
         var expiresAt = now + parseInt(tokenData.expires_in, 10) * 1000 - 30000;
-
         var toStore = {
             access_token: tokenData.access_token,
-            refresh_token: tokenData.refresh_token || me._getData("refresh_token"),
+            refresh_token: tokenData.refresh_token || me._getData('refresh_token'),
             expires_at: expiresAt
         };
         for (var prop in toStore) {
-            $storage.setItem(me.options.name + '-' + prop, toStore[prop], me.isPersistent);
+            AuthService.$storage.setItem(me.options.name + '-' + prop, toStore[prop], me.isPersistent);
         }
         me.access_token = toStore.access_token;
         me.refresh_token = toStore.refresh_token;
     };
-
-    function _requestAccessToken() {
+    AuthService.prototype._requestAccessToken = function () {
         var me = this;
-        var deferred = $q.defer();
+        var deferred = AuthService.$q.defer();
         var options = extend({
+            persistent: me.isPersistent
+        }, {
             authorizeUrl: me.options.url + 'token'
         }, me.options);
-
         var data = {
             grant_type: 'refresh_token',
             refresh_token: me.refresh_token,
-            // Opcionais
             client_id: options.clientId,
             client_secret: options.clientSecret
         };
         var body = [];
         for (var prop in data) {
             if (data[prop] != null) {
-                body.push(prop + "=" + data[prop]);
-            };
-        };
-
+                body.push(prop + '=' + data[prop]);
+            }
+            ;
+        }
+        ;
         var refreshUrl = options.authorizeUrl;
         if (!me._hasPendingRequests()) {
             me._addPendingRequest(deferred);
-            $http.post(refreshUrl, body.join("&"), {
-                    ignoreAuthInterceptor: true
-                })
-                .then(function(response) {
-                    me.setToken(response.data, !!options.persistent);
-                    me._resolveAllPendingRequest(true, arguments)
-                }, function() {
-                    me._resolveAllPendingRequest(false, arguments)
-                });
-        } else {
+            AuthService.$http.post(refreshUrl, body.join('&'), {
+                ignoreAuthInterceptor: true
+            })
+                .then(function (response) {
+                me.setToken(response.data, !!options.persistent);
+                me._resolveAllPendingRequest(true, arguments);
+            }, function () {
+                me._resolveAllPendingRequest(false, arguments);
+            });
+        }
+        else {
             me._addPendingRequest(deferred);
         }
         return deferred.promise;
-    }
-
-    function _authorizeRequest(requestConfig, responseError) {
-        var deferred = $q.defer();
-        var me = this;
-
-        function continueRequest(access_token) {
-            if (access_token) {
-                requestConfig.headers['Authorization'] = 'Bearer ' + access_token;
+    };
+    AuthService.prototype._requestCredentials = function () {
+        var deferred = AuthService.$q.defer();
+        var isPromise = function (object) { return object && typeof object.then === 'function'; };
+        if (this.options.resourceOwnerCredentialsFn) {
+            var roCredentials = this.options.resourceOwnerCredentialsFn ? this.options.resourceOwnerCredentialsFn(this.options) : undefined;
+            if (isPromise(roCredentials)) {
+                roCredentials.then(function () { return deferred.resolve(); }, deferred.reject());
             }
-            deferred.resolve(requestConfig);
-        }
-
-        function abortRequest() {
-            !responseError ? continueRequest() : deferred.reject(responseError);
-        }
-
-        function isBadRefreshToken(response) {
-            return response[1] === 400 && response[0].error === "invalid_grant";
-        }
-
-        function requestCredentials() {
-            //console.log("Credentials requested: " + me.options.url);
-
-            //Se a função foi definida supoe-se resourceOwnerCredentials
-            if (!me.options.resourceOwnerCredentialsFn) {
-                // Se não está configurado o cliente 
-                if (me.options.client_id) {
-                    if (me.options.clientCredentialsFn) {
-                        me.options.clientCredentialsFn();
-                    } else {
-                        continueRequest();
-                    }
-                } else {
-                    //selfAuthorize
-                    me.authorize()
-                        .then(function() {
-                            continueRequest(me.access_token);
-                        }, function() {
-                            abortRequest();
-                        });
-                }
-
-            } else {
-                abortRequest();
-                me.options.resourceOwnerCredentialsFn(me.options);
+            else {
+                deferred.reject();
             }
         }
-
-        this.getToken().then(function(access_token) {
-            continueRequest(access_token);
-        }, function(response) {
-            if (response === "REQUEST_CREDENTIALS" || isBadRefreshToken(response)) {
-                requestCredentials();
-            } else {
-                abortRequest();
+        else if (this.options.clientId && this.options.clientSecret) {
+            var cliCredentials = this.options.clientCredentialsFn ? this.options.clientCredentialsFn(this, this.options) : undefined;
+            if (isPromise(cliCredentials)) {
+                cliCredentials.then(function () { return deferred.resolve(); }, deferred.reject());
             }
-        })
-
-        //abortRequest();
+            else {
+                deferred.reject();
+            }
+        }
+        else {
+            deferred.reject();
+        }
         return deferred.promise;
     };
-
-    function _addPendingRequest(deferred) {
+    AuthService.prototype._authorizeRequest = function (httpConfig) {
+        var _this = this;
+        var deferred = AuthService.$q.defer();
+        var continueRequest = function (access_token) {
+            if (access_token) {
+                httpConfig.headers['Authorization'] = 'Bearer ' + access_token;
+            }
+            deferred.resolve(httpConfig);
+        };
+        var isBadRefreshToken = function (response) {
+            return response[0].status === 400 && response[0].data && response[0].data.error === 'invalid_grant';
+        };
+        if (this._hasAccessToken()) {
+            httpConfig[AuthService.TRATAR_401] = true;
+            continueRequest(this.access_token);
+        }
+        else {
+            this.removeAccessToken();
+            if (this._hasRefreshToken()) {
+                this._requestAccessToken()
+                    .then(function () {
+                    continueRequest(_this.access_token);
+                }, function (response) {
+                    if (isBadRefreshToken(response)) {
+                        _this.removeToken();
+                        _this._requestCredentials()
+                            .then(function () {
+                            continueRequest(_this.access_token);
+                        }, function () {
+                            continueRequest();
+                        });
+                    }
+                    else {
+                        continueRequest();
+                    }
+                });
+            }
+            else {
+                this._requestCredentials()
+                    .then(function () {
+                    continueRequest(_this.access_token);
+                }, function () {
+                    continueRequest();
+                });
+            }
+        }
+        return deferred.promise;
+    };
+    AuthService.prototype._addPendingRequest = function (deferred) {
         var me = this;
         me._pendingRequests = me._pendingRequests || [];
         me._pendingRequests.push(deferred);
     };
-
-    function _hasPendingRequests() {
+    AuthService.prototype._hasPendingRequests = function () {
         var me = this;
         return (me._pendingRequests || []).length > 0;
     };
-
-    function _resolveAllPendingRequest(isSuccess, arglist) {
+    AuthService.prototype._resolveAllPendingRequest = function (isSuccess, arglist) {
         var me = this;
-        (me._pendingRequests || []).map(function(deferred) {
-            deferred[isSuccess ? "resolve" : "reject"].call(deferred, arglist);
+        (me._pendingRequests || []).map(function (deferred) {
+            deferred[isSuccess ? 'resolve' : 'reject'].call(deferred, arglist);
         });
         delete me._pendingRequests;
     };
-
-    function extend(dst) {
-        for (var i = 1, ii = arguments.length; i < ii; i++) {
-            var obj = arguments[i];
-            if (obj) {
-                var keys = Object.keys(obj);
-                for (var j = 0, jj = keys.length; j < jj; j++) {
-                    var key = keys[j];
-                    dst[key] = obj[key];
-                }
-            }
-        }
-        return dst;
-    };
-}));
-(function() {
-    'use strict';
-    angular.module('ngBearerAuth', [
-            'ngBearerAuth.service'
-        ])
-        .factory('$authServiceInterceptor', AuthServiceInterceptor)
-
-    .factory('$auth', ["$authProvider", function($authProvider) {
-        var defaultConfig = $authProvider.get('default');
-        // if (!defaultConfig) {
-        //     defaultConfig = $authProvider.configure({});
-        // };
-        return defaultConfig;
-    }])
-
-    .factory('$authProvider', ["$$authService", function($$authService) {
-        var configs = {};
-        var Provider = {
-            configure: configure,
-            get: get,
-            getByUrl: getByUrl
-        };
-        return Provider;
-        // ---------------------------------------------------------------
-        function configure(options) {
-            var name = options.name = options.name || "default";
-            if (name in configs) {
-                throw 'name ' + name + ' is already taken!';
-            }
-            return configs[name] = new $$authService(options); //new AuthService(options);
-        }
-
-        function get(name) {
-            if (!angular.isString(name)) {
-                throw 'Expected name to be a string! Found: ' + typeof name + '.';
-            }
-            var config = configs[name];
-            if (config) {
-                return config;
-            };
-            return configs["default"];
-        }
-
-        function getByUrl(url) {
-            if (!angular.isString(url)) {
-                throw 'Expected url to be a string! Found: ' + typeof url + '.';
-            }
-            for (var u in configs) {
-                var config = configs[u];
-                if (!!config.options.url && url.indexOf(config.options.url) == 0) {
-                    return config;
-                };
-            };
-            return null; //configs["default"];
-        }
-    }]);
-
-    angular.module('ngBearerAuthInterceptor', ['ngBearerAuth'])
-        .config(["$httpProvider", function($httpProvider) {
-            $httpProvider.interceptors.push('$authServiceInterceptor');
-        }]);
-
-    //--------------------------------------------------------
-
-    // // ----------------------------------------------------------------
-    function AuthServiceInterceptor($injector, $q) {
-        var $authProvider;
-        return {
-            request: function(httpConfig) {
-                httpConfig.headers = httpConfig.headers || {};
-                //Executar interceptor somente quando não houver nenhum método de autorização registrado 
-                if (httpConfig.url && !httpConfig.headers.Authorization && !httpConfig.ignoreAuthInterceptor) {
-                    $authProvider = $authProvider || $injector.get('$authProvider');
-                    var $auth = $authProvider.getByUrl(httpConfig.url);
-                    if (!$auth) {
-                        return httpConfig || $q.when(httpConfig);
-                    }
-                    return $auth._authorizeRequest(httpConfig);
-                }
-                return httpConfig;
-            },
-            responseError: function(response) {
-                //return $q.reject("response");
-                if (response.status === 401 && response.config) {
-                    var $auth = $authProvider.getByUrl(response.config.url);
-                    if ($auth) {
-                        $auth.removeToken();
-                        return $auth._authorizeRequest(response.config, response);
-                    }
-                }
-                return $q.reject(response);
-            }
-        };
+    AuthService.TRATAR_401 = 'authInterceptorRecoverFrom401';
+    return AuthService;
+})();
+var AuthFactory = (function () {
+    function AuthFactory(AuthService) {
+        this.AuthService = AuthService;
+        this.configs = {};
     }
-    AuthServiceInterceptor.$inject = ["$injector", "$q"];
-
-})(window, window.angular);
+    AuthFactory.prototype.configure = function (options) {
+        var name = options.name = options.name || 'default';
+        if (name in this.configs) {
+            throw 'name ' + name + ' is already taken!';
+        }
+        return this.configs[name] = new this.AuthService(options);
+    };
+    AuthFactory.prototype.get = function (name) {
+        if (typeof name !== 'string') {
+            throw 'Expected name to be a string! Found: ' + typeof name + '.';
+        }
+        var config = this.configs[name];
+        if (config) {
+            return config;
+        }
+        ;
+        return this.configs['default'];
+    };
+    AuthFactory.prototype.getByUrl = function (url) {
+        if (typeof url !== 'string') {
+            throw 'Expected url to be a string! Found: ' + typeof url + '.';
+        }
+        for (var u in this.configs) {
+            var config = this.configs[u];
+            if (!!config.options.url && url.indexOf(config.options.url) === 0) {
+                return config;
+            }
+            ;
+        }
+        ;
+        return null;
+    };
+    AuthFactory.$inject = [
+        '$$authService'
+    ];
+    return AuthFactory;
+})();
+var appStorage = function ($window) {
+    if (isLocalStorageAllowed()) {
+        return $window.localStorage;
+    }
+    else {
+        return $window.sessionStorage;
+    }
+    function isLocalStorageAllowed() {
+        var mod = "test";
+        try {
+            $window.localStorage.setItem(mod, mod);
+            $window.localStorage.removeItem(mod);
+            return true;
+        }
+        catch (e) {
+            return false;
+        }
+    }
+};
+appStorage.$inject = ['$window'];
+var AuthStorage = (function () {
+    function AuthStorage($window, appStorage) {
+        this.$window = $window;
+        this.appStorage = appStorage;
+    }
+    AuthStorage.prototype.getItem = function (name) {
+        var value = this.$window.sessionStorage.getItem(name) || this.appStorage.getItem(name);
+        return angular.fromJson(value);
+    };
+    AuthStorage.prototype.removeItem = function (name, isPersistent) {
+        var storage = isPersistent ? this.appStorage : this.$window.sessionStorage;
+        return storage.removeItem(name);
+    };
+    AuthStorage.prototype.setItem = function (name, value, isPersistent) {
+        var storage = isPersistent ? this.appStorage : this.$window.sessionStorage;
+        return storage.setItem(name, angular.toJson(value));
+    };
+    AuthStorage.$inject = [
+        '$window',
+        'appStorage'
+    ];
+    return AuthStorage;
+})();
+var AuthServiceInterceptor = (function () {
+    function AuthServiceInterceptor() {
+    }
+    AuthServiceInterceptor.prototype.request = function (httpConfig) {
+        httpConfig.headers = httpConfig.headers || {};
+        if (httpConfig.url && !httpConfig.headers['Authorization'] && !httpConfig['ignoreAuthInterceptor']) {
+            this.$authProvider = this.$authProvider || AuthServiceInterceptor.$injector.get('$authProvider');
+            var $auth = this.$authProvider.getByUrl(httpConfig.url);
+            if (!$auth) {
+                return httpConfig || AuthServiceInterceptor.$q.when(httpConfig);
+            }
+            return $auth._authorizeRequest(httpConfig);
+        }
+        return httpConfig;
+    };
+    AuthServiceInterceptor.prototype.responseError = function (rejection) {
+        if (rejection.status === 401 && rejection.config && rejection.config[AuthService.TRATAR_401] === true) {
+            this.$authProvider = this.$authProvider || AuthServiceInterceptor.$injector.get('$authProvider');
+            var $auth = this.$authProvider.getByUrl(rejection.config.url);
+            if ($auth) {
+                $auth.removeAccessToken();
+                delete rejection.config[AuthService.TRATAR_401];
+                delete rejection.config.headers['Authorization'];
+                this.$http = this.$http || AuthServiceInterceptor.$injector.get('$http');
+                return AuthServiceInterceptor.$q.resolve(this.$http(rejection.config));
+            }
+        }
+        return AuthServiceInterceptor.$q.reject(rejection);
+    };
+    return AuthServiceInterceptor;
+})();
+angular.module('ngBearerAuth.storage', [])
+    .factory('appStorage', appStorage);
+angular.module('ngBearerAuth', ['ngBearerAuth.storage'])
+    .service('$$storage', AuthStorage)
+    .factory('$$authService', ['$q', '$http', '$$storage', function ($q, $http, $storage) {
+        AuthService.$q = $q;
+        AuthService.$http = $http;
+        AuthService.$storage = $storage;
+        return AuthService;
+    }])
+    .service('$authProvider', AuthFactory)
+    .factory('$auth', ['$authProvider', function ($authProvider) { return $authProvider.get('default'); }])
+    .factory('$authServiceInterceptor', ['$injector', '$q', function ($injector, $q) {
+        AuthServiceInterceptor.$injector = $injector;
+        AuthServiceInterceptor.$q = $q;
+        return new AuthServiceInterceptor();
+    }]);
+angular.module('ngBearerAuthInterceptor', ['ngBearerAuth'])
+    .config(['$httpProvider', function ($httpProvider) { return $httpProvider.interceptors.push('$authServiceInterceptor'); }]);
+//# sourceMappingURL=ng-bearer-auth.js.map

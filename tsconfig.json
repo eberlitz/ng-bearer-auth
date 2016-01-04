@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outDir": "./dist/",
+        "sourceMap": true
+    },
+    "files": [
+        "src/ng-bearer-auth.ts"
+    ]
+}

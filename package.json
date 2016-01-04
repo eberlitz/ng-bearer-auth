@@ -1,49 +1,37 @@
 {
-  "name": "ng-bearer-auth",
-  "version": "0.1.3",
-  "description": "Token-based AngularJS Authentication",
-  "main": "src/authservice.js",
-  "jspm": {
-    "main": "dist/ng-bearer-auth.js"
-  },
-  "scripts": {
-    "test": "./node_modules/karma/bin/karma start"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/eberlitz/ng-bearer-auth.git"
-  },
-  "keywords": [
-    "authentication",
-    "token",
-    "bearer",
-    "angular",
-    "auth",
-    "oauth",
-    "oauth2",
-    "angularjs",
-    "access_token"
-  ],
-  "author": {
-    "name": "Eduardo Eidelwein Berlitz",
-    "email": "eberlitz@gmail.com",
-    "url": "http://eberlitz.github.io"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/eberlitz/ng-bearer-auth/issues"
-  },
-  "homepage": "https://github.com/eberlitz/ng-bearer-auth",
-  "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-header": "^1.2.2",
-    "gulp-ng-annotate": "^1.0.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^1.2.0",
-    "jasmine-core": "^2.3.4",
-    "karma": "^0.12.37",
-    "karma-chrome-launcher": "^0.2.0",
-    "karma-jasmine": "^0.3.6"
-  }
+    "name": "ng-bearer-auth",
+    "version": "0.2.0",
+    "description": "Token-based AngularJS Authentication",
+    "main": "dist/ng-bearer-auth.js",
+    "scripts": {
+        "prepublish": "tsc"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/eberlitz/ng-bearer-auth.git"
+    },
+    "keywords": [
+        "authentication",
+        "token",
+        "bearer",
+        "angular",
+        "auth",
+        "oauth",
+        "oauth2",
+        "angularjs",
+        "access_token"
+    ],
+    "author": {
+        "name": "Eduardo Eidelwein Berlitz",
+        "email": "eberlitz@gmail.com",
+        "url": "http://eberlitz.github.io"
+    },
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/eberlitz/ng-bearer-auth/issues"
+    },
+    "homepage": "https://github.com/eberlitz/ng-bearer-auth",
+    "devDependencies": {
+        "typescript": "^1.7.5"
+    }
 }
