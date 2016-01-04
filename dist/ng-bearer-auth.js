@@ -170,7 +170,7 @@ var AuthService = (function () {
         if (this.options.resourceOwnerCredentialsFn) {
             var roCredentials = this.options.resourceOwnerCredentialsFn ? this.options.resourceOwnerCredentialsFn(this.options) : undefined;
             if (isPromise(roCredentials)) {
-                roCredentials.then(function () { return deferred.resolve(); }, deferred.reject());
+                roCredentials.then(function () { return deferred.resolve(); }, function () { return deferred.reject(); });
             }
             else {
                 deferred.reject();
@@ -179,7 +179,7 @@ var AuthService = (function () {
         else if (this.options.clientId && this.options.clientSecret) {
             var cliCredentials = this.options.clientCredentialsFn ? this.options.clientCredentialsFn(this, this.options) : undefined;
             if (isPromise(cliCredentials)) {
-                cliCredentials.then(function () { return deferred.resolve(); }, deferred.reject());
+                cliCredentials.then(function () { return deferred.resolve(); }, function () { return deferred.reject(); });
             }
             else {
                 deferred.reject();

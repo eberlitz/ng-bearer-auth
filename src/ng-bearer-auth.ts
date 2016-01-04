@@ -265,14 +265,14 @@ class AuthService {
         if (this.options.resourceOwnerCredentialsFn) { // para ser resource_owner deve-se informar uma função
             let roCredentials = this.options.resourceOwnerCredentialsFn ? this.options.resourceOwnerCredentialsFn(this.options) : undefined;
             if (isPromise(roCredentials)) {
-                roCredentials.then(() => deferred.resolve(), deferred.reject());
+                roCredentials.then(() => deferred.resolve(), () => deferred.reject());
             } else {
                 deferred.reject();
             }
         } else if (this.options.clientId && this.options.clientSecret) { // para client deve conter o id e o secret
             let cliCredentials = this.options.clientCredentialsFn ? this.options.clientCredentialsFn(this, this.options) : undefined;
             if (isPromise(cliCredentials)) {
-                cliCredentials.then(() => deferred.resolve(), deferred.reject());
+                cliCredentials.then(() => deferred.resolve(), () => deferred.reject());
             } else {
                 deferred.reject();
             }
