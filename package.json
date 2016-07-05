@@ -1,6 +1,6 @@
 {
     "name": "ng-bearer-auth",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "Token-based AngularJS Authentication",
     "main": "dist/ng-bearer-auth.js",
     "scripts": {
