@@ -1,4 +1,3 @@
-/// <reference path="../typings/tsd.d.ts" />
 function extend() {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -41,14 +40,15 @@ var AuthService = (function () {
             client_id: options.clientId,
             client_secret: options.clientSecret
         };
+        if (options.scope) {
+            data.scope = encodeURIComponent(options.scope.join(' '));
+        }
         var body = [];
         for (var prop in data) {
             if (data[prop] != null) {
                 body.push(prop + '=' + data[prop]);
             }
-            ;
         }
-        ;
         config = extend({
             ignoreAuthInterceptor: true
         }, config);
@@ -256,7 +256,7 @@ var AuthService = (function () {
     };
     AuthService.TRATAR_401 = 'authInterceptorRecoverFrom401';
     return AuthService;
-})();
+}());
 var AuthFactory = (function () {
     function AuthFactory(AuthService) {
         this.AuthService = AuthService;
@@ -298,7 +298,7 @@ var AuthFactory = (function () {
         '$$authService'
     ];
     return AuthFactory;
-})();
+}());
 var appStorage = function ($window) {
     if (isLocalStorageAllowed()) {
         return $window.localStorage;
@@ -341,7 +341,7 @@ var AuthStorage = (function () {
         'appStorage'
     ];
     return AuthStorage;
-})();
+}());
 var AuthServiceInterceptor = (function () {
     function AuthServiceInterceptor() {
     }
@@ -372,7 +372,7 @@ var AuthServiceInterceptor = (function () {
         return AuthServiceInterceptor.$q.reject(rejection);
     };
     return AuthServiceInterceptor;
-})();
+}());
 angular.module('ngBearerAuth.storage', [])
     .factory('appStorage', appStorage);
 angular.module('ngBearerAuth', ['ngBearerAuth.storage'])

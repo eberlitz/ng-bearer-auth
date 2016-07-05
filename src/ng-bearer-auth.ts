@@ -7,6 +7,7 @@ interface IAuthorizeOptions {
     clientSecret?: string;
     authorizeUrl?: string;
     persistent?: boolean;
+    scope?: string[];
 }
 interface IAuthorizationOptions {
     name?: string;
@@ -97,13 +98,15 @@ class AuthService {
             client_id: options.clientId,
             client_secret: options.clientSecret
         };
+        if(options.scope){
+            (<any>data).scope = encodeURIComponent(options.scope.join(' '));
+        }
         var body: string[] = [];
         for (var prop in data) {
             if ((<any>data)[prop] != null) {
                 body.push(prop + '=' + (<any>data)[prop]);
-            };
-        };
-
+            }
+        }
         config = extend({
             ignoreAuthInterceptor: true
         }, config);
