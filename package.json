@@ -1,11 +1,8 @@
 {
     "name": "ng-bearer-auth",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Token-based AngularJS Authentication",
     "main": "dist/ng-bearer-auth.js",
-    "scripts": {
-        "prepublish": "tsc"
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/eberlitz/ng-bearer-auth.git"

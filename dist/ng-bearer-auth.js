@@ -46,12 +46,16 @@ var AuthService = (function () {
         var body = [];
         for (var prop in data) {
             if (data[prop] != null) {
-                body.push(prop + '=' + data[prop]);
+                body.push(prop + '=' + encodeURIComponent(data[prop]));
             }
         }
         config = extend({
             ignoreAuthInterceptor: true
         }, config);
+        if (!config.headers) {
+            config.headers = {};
+        }
+        config.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
         AuthService.$http.post(options.authorizeUrl, body.join('&'), config)
             .then(function (response) {
             me.setToken(response.data, !!options.persistent);
@@ -141,18 +145,18 @@ var AuthService = (function () {
         var body = [];
         for (var prop in data) {
             if (data[prop] != null) {
-                body.push(prop + '=' + data[prop]);
+                body.push(prop + '=' + encodeURIComponent(data[prop]));
             }
-            ;
         }
-        ;
         var refreshUrl = options.authorizeUrl;
         if (!me._hasPendingRequests()) {
             me._addPendingRequest(deferred);
             AuthService.$http.post(refreshUrl, body.join('&'), {
-                ignoreAuthInterceptor: true
-            })
-                .then(function (response) {
+                ignoreAuthInterceptor: true,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                }
+            }).then(function (response) {
                 me.setToken(response.data, !!options.persistent);
                 me._resolveAllPendingRequest(true, arguments);
             }, function () {
